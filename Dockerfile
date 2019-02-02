@@ -17,7 +17,21 @@ RUN apt-get update && apt-get install -y \
 # Install the PHP extensions we need
 RUN docker-php-ext-install -j8 mysqli opcache intl
 
-# Install the default object cache.
+# Install the default object cache
 RUN pecl channel-update pecl.php.net
 RUN pecl install apcu
 RUN docker-php-ext-enable apcu
+
+#
+# Tini
+#
+# See https://github.com/krallin/tini for the further details
+ARG TINI_VERSION=v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--"]
+
+# Remove packages which is not needed anymore (build dependencies of PHP extensions)
+ONBUILD RUN apt-get autoremove -y --purge \
+              build-essential \
+              libicu-dev
